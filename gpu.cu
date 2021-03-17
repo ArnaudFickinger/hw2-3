@@ -64,7 +64,7 @@ __global__ void compute_forces_gpu(particle_t* ordered_particles, int* bin_count
        index_first = 0;
     else
        index_first = bin_counts_sum[bin_num-1];
-    if (bin_num>=num_bins-2)
+    if (bin_num>=num_bins_-2)
        index_last = num_parts_;
     else
        index_last = bin_counts_sum[bin_num+2];
