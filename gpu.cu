@@ -125,8 +125,8 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     // std::cout << cpu_bin_num << ",\t";
 
     // bin_counts[bin_num] = 5;
-
-    bin_counts[bin_num]+=1;
+    bin_counts_device[bin_num]+=1;
+    // bin_counts[bin_num]+=1;
 
     // atomicAdd(&bin_counts[bin_num], 1);
 }
