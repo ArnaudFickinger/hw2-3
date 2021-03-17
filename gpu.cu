@@ -128,7 +128,7 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     // bin_counts_device[bin_num]+=1;
     // bin_counts[bin_num]=bin_counts[bin_num]+1;
 
-    atomicAdd(&bin_counts[0], 1);
+    atomicAdd(&bin_counts[bin_num], 1);
 }
 
 __global__ void update_bin_counts_test(particle_t *parts, int num_parts, int *bin_counts, float size_bin_, int num_bins_) {
@@ -148,8 +148,10 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
+
     // num_bins_1d = int(size / cutoff);
     num_bins_1d = 2;
+    size_bin = size/num_bins_1d;
     // std::cout << "size" << size << ",\t";
     // std::cout << "cutoff" << cutoff << ",\t";
     // std::cout << "num_bins_1d" << num_bins_1d << ",\t";
