@@ -131,6 +131,14 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     // atomicAdd(&bin_counts[bin_num], 1);
 }
 
+__global__ void update_bin_counts_test(particle_t *parts, int num_parts, int *bin_counts, float size_bin_, int num_bins_) {
+
+    bin_counts[0]+=1;
+    // bin_counts[bin_num]+=1;
+
+    // atomicAdd(&bin_counts[bin_num], 1);
+}
+
 void init_simulation(particle_t* parts, int num_parts, double size) {
     // You can use this space to initialize data objects that you may need
     // This function will be called once before the algorithm begins
@@ -221,9 +229,12 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // create_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts, size_bin, num_bins);
     /////
 
-    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins);
+    cudaMalloc((void**)&bin_counts_device, size_bin_counts);
+    cudaMemcpy(bin_counts_device, bin_counts_host, size_bin_counts, cudaMemcpyHostToDevice);
 
-    cudaMemcpy(bin_counts_host_check, bin_counts_device, num_bins * sizeof(int), cudaMemcpyDeviceToHost);
+    update_bin_counts_test<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins);
+
+    cudaMemcpy(bin_counts_host_check, bin_counts_device, size_bin_counts, cudaMemcpyDeviceToHost);
 
     std::cout << "new step" << ",\t";
 
