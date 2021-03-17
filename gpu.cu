@@ -140,6 +140,28 @@ __global__ void update_bin_counts_test(particle_t *parts, int num_parts, int *bi
     // atomicAdd(&bin_counts[bin_num], 1);
 }
 
+__global__ void scan(float *g_odata, float *g_idata, int n)
+{
+ extern __shared__ float temp[]; // allocated on invocation
+ int thid = threadIdx.x;
+ int pout = 0, pin = 1;
+ // load input into shared memory.
+ // This is exclusive scan, so shift right by one and set first elt to 0
+ temp[pout*n + thid] = (thid > 0) ? g_idata[thid-1] : 0;
+ __syncthreads();
+ for (int offset = 1; offset < n; offset *= 2)
+ {
+ pout = 1 - pout; // swap double buffer indices
+ pin = 1 - pout;
+ if (thid >= offset)
+ temp[pout*n+thid] += temp[pin*n+thid - offset];
+ else
+ temp[pout*n+thid] = temp[pin*n+thid];
+ __syncthreads();
+ }
+ g_odata[thid] = temp[pout*n+thid1]; // write output
+}
+
 void init_simulation(particle_t* parts, int num_parts, double size) {
     // You can use this space to initialize data objects that you may need
     // This function will be called once before the algorithm begins
@@ -148,23 +170,13 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
-
     num_bins_1d = int(size / cutoff);
-    // num_bins_1d = 2;
     size_bin = size/num_bins_1d;
-    // std::cout << "size" << size << ",\t";
-    // std::cout << "cutoff" << cutoff << ",\t";
-    // std::cout << "num_bins_1d" << num_bins_1d << ",\t";
     num_bins = num_bins_1d*num_bins_1d;
     size_bin_counts = num_bins* sizeof(int);
     bin_counts_host = (int*)calloc(num_bins, sizeof(int));
     bin_counts_host_check = (int*)calloc(num_bins, sizeof(int));
 
-    // std::cout << "init_simulation" << ",\t";
-    //
-    // for (int i = 0; i < num_bins; i++) {
-    //     std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
-    // }
 
     cudaMalloc(&bin_counts_device, size_bin_counts);
     cudaMemcpy(bin_counts_device, bin_counts_host, size_bin_counts, cudaMemcpyHostToDevice);
@@ -174,37 +186,8 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     cudaMalloc((void**)&ordered_particles_device, num_parts * sizeof(particle_t));
     cudaMemcpy(ordered_particles_device, ordered_particles_host, num_parts * sizeof(particle_t), cudaMemcpyHostToDevice);
 
-    /////
-    // num_bins_side = int(size / cutoff);
-    // num_bins = num_bins_side * num_bins_side;
-    // size_bin = size / num_bins_side;
-    /////
 }
 
-// __global__ void create_bin_counts(particle_t* parts, int num_parts, int* bin_counts, int size_bin, int num_bins) {
-//     int tid = threadIdx.x + blockIdx.x * blockDim.x;
-//     if (tid >= num_parts) {
-//       return;
-//     }
-//     // particle_t& part = parts[tid];
-//
-//     // int bin_x = int(part.x / size_bin);
-//     // int bin_y = int(part.y / size_bin);
-//     // int bin_num = bin_x + bin_y * num_bins;
-//
-//     int bin_x = int(parts[tid].x / size_bin);
-//     int bin_y = int(parts[tid].y / size_bin);
-//     int bin_num = bin_x + bin_y * num_bins;
-//
-//     // int* cpu_bin_num = (int*) malloc(sizeof(int));
-//     // cudaMemcpy(cpu_bin_num, bin_num, sizeof(int), cudaMemcpyDeviceToHost);
-//
-//     // std::cout << cpu_bin_num << ",\t";
-//
-//     bin_counts[bin_num] = 5;
-//
-//     // atomicAdd(&bin_counts[bin_num], 1);
-// }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // parts live in GPU memory
