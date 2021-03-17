@@ -133,7 +133,8 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
 
 __global__ void update_bin_counts_test(particle_t *parts, int num_parts, int *bin_counts, float size_bin_, int num_bins_) {
 
-    bin_counts[0]+=1;
+    // bin_counts[0]=1;
+    atomicAdd(&bin_counts[0], 1);
     // bin_counts[bin_num]+=1;
 
     // atomicAdd(&bin_counts[bin_num], 1);
