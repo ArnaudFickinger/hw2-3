@@ -53,9 +53,9 @@ __global__ void compute_forces_gpu(particle_t* ordered_particles, int* bin_count
     if (tid >= num_parts_)
         return;
 
-    int bin_x = int(ordered_particles[tid].x / size_bin);
-    int bin_y = int(ordered_particles[tid].y / size_bin);
-    int bin_num = bin_x + bin_y * num_bins_1d;
+    int bin_x = int(ordered_particles[tid].x / size_bin_);
+    int bin_y = int(ordered_particles[tid].y / size_bin_);
+    int bin_num = bin_x + bin_y * num_bins_1d_;
 
     int index_first = 0;
     int index_last = 0;
@@ -65,7 +65,7 @@ __global__ void compute_forces_gpu(particle_t* ordered_particles, int* bin_count
     else
        index_first = bin_counts_sum[bin_num-1];
     if (bin_num>=num_bins-2)
-       index_last = num_parts;
+       index_last = num_parts_;
     else
        index_last = bin_counts_sum[bin_num+2];
 
@@ -115,8 +115,8 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     // int bin_y = int(part.y / size_bin);
     // int bin_num = bin_x + bin_y * num_bins;
 
-    int bin_x = int(parts[tid].x / size_bin);
-    int bin_y = int(parts[tid].y / size_bin);
+    int bin_x = int(parts[tid].x / size_bin_);
+    int bin_y = int(parts[tid].y / size_bin_);
     int bin_num = bin_x + bin_y * num_bins_;
 
     // int* cpu_bin_num = (int*) malloc(sizeof(int));
@@ -138,7 +138,7 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
     num_bins_1d = int(size / cutoff);
-    num_bins = num_bins_1d*num_bins_1d
+    num_bins = num_bins_1d*num_bins_1d;
     size_bin_counts = num_bins* sizeof(int);
     bin_counts_host = (int*)malloc(size_bin_counts);
     bin_counts_host_check = (int*)malloc(size_bin_counts);
