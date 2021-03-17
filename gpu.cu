@@ -233,7 +233,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     cudaMalloc((void**)&bin_counts_device, size_bin_counts);
     cudaMemcpy(bin_counts_device, bin_counts_host, size_bin_counts, cudaMemcpyHostToDevice);
 
-    update_bin_counts_test<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins);
+    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins);
 
     cudaMemcpy(bin_counts_host_check, bin_counts_device, size_bin_counts, cudaMemcpyDeviceToHost);
 
