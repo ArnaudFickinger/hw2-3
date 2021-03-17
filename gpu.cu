@@ -138,16 +138,17 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
     num_bins_1d = int(size / cutoff);
+    std::cout << "num_bins_1d" << num_bins_1d << ",\t";
     num_bins = num_bins_1d*num_bins_1d;
     size_bin_counts = num_bins* sizeof(int);
     bin_counts_host = (int*)calloc(num_bins, sizeof(int));
     bin_counts_host_check = (int*)calloc(num_bins, sizeof(int));
 
-    std::cout << "init_simulation" << ",\t";
-
-    for (int i = 0; i < num_bins; i++) {
-        std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
-    }
+    // std::cout << "init_simulation" << ",\t";
+    //
+    // for (int i = 0; i < num_bins; i++) {
+    //     std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
+    // }
 
     cudaMalloc(&bin_counts_device, size_bin_counts);
     cudaMemcpy(bin_counts_device, bin_counts_host, size_bin_counts, cudaMemcpyHostToDevice);
