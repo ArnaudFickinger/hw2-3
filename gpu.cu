@@ -1,5 +1,6 @@
 #include "common.h"
 #include <cuda.h>
+#include <iostream>
 
 #define NUM_THREADS 256
 
@@ -49,21 +50,24 @@ __global__ void compute_forces_gpu_naive(particle_t* particles, int num_parts) {
 __global__ void compute_forces_gpu(particle_t* ordered_particles, int* bin_counts_sum, int num_parts_, float size_bin_, int num_bins_1d_, int num_bins_) {
     // Get thread (particle) ID
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
-    if (tid >= num_parts)
+    if (tid >= num_parts_)
         return;
 
     int bin_x = int(ordered_particles[tid].x / size_bin);
     int bin_y = int(ordered_particles[tid].y / size_bin);
     int bin_num = bin_x + bin_y * num_bins_1d;
 
+    int index_first = 0;
+    int index_last = 0;
+
     if (bin_num==0)
-      int index_first = 0;
+       index_first = 0;
     else
-      int index_first = bin_counts_sum[bin_num-1];
+       index_first = bin_counts_sum[bin_num-1];
     if (bin_num>=num_bins-2)
-      int index_last = num_parts;
+       index_last = num_parts;
     else
-      int index_last = bin_counts_sum[bin_num+2];
+       index_last = bin_counts_sum[bin_num+2];
 
     ordered_particles[tid].ax = ordered_particles[tid].ay = 0;
     for (int j = index_first; j < index_last; j++)
@@ -100,7 +104,7 @@ __global__ void move_gpu(particle_t* particles, int num_parts, double size) {
     }
 }
 
-__device__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_counts, float size_bin_) {
+__global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_counts, float size_bin_, int num_bins_) {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if (tid >= num_parts) {
       return;
@@ -211,7 +215,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // create_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts, size_bin, num_bins);
     /////
 
-    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins_1d)
+    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins);
     cudaMemcpy(bin_counts_host_check, bin_counts_device, num_bins * sizeof(int), cudaMemcpyDeviceToHost);
 
     std::cout << "new step" << ",\t";
