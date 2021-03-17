@@ -119,8 +119,6 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     int bin_y = int(parts[tid].y / size_bin_);
     int bin_num = bin_x + bin_y * num_bins_;
 
-    std::cout << bin_num << ",\t";
-
     // int* cpu_bin_num = (int*) malloc(sizeof(int));
     // cudaMemcpy(cpu_bin_num, bin_num, sizeof(int), cudaMemcpyDeviceToHost);
 
