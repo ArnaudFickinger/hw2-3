@@ -5,6 +5,17 @@
 
 // Put any static global variables here that you will use throughout the simulation.
 int blks;
+int num_bins_1d;
+int num_bins;
+float size_bin;
+int size_bin_counts;
+
+int* bin_counts_host;
+int* bin_counts_host_check;
+int* bin_counts_device;
+
+particle_t* ordered_particles_host;
+particle_t* ordered_particles_device;
 
 __device__ void apply_force_gpu(particle_t& particle, particle_t& neighbor) {
     double dx = neighbor.x - particle.x;
@@ -24,7 +35,7 @@ __device__ void apply_force_gpu(particle_t& particle, particle_t& neighbor) {
     particle.ay += coef * dy;
 }
 
-__global__ void compute_forces_gpu(particle_t* particles, int num_parts) {
+__global__ void compute_forces_gpu_naive(particle_t* particles, int num_parts) {
     // Get thread (particle) ID
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if (tid >= num_parts)
@@ -33,6 +44,30 @@ __global__ void compute_forces_gpu(particle_t* particles, int num_parts) {
     particles[tid].ax = particles[tid].ay = 0;
     for (int j = 0; j < num_parts; j++)
         apply_force_gpu(particles[tid], particles[j]);
+}
+
+__global__ void compute_forces_gpu(particle_t* ordered_particles, int* bin_counts_sum, int num_parts_, float size_bin_, int num_bins_1d_, int num_bins_) {
+    // Get thread (particle) ID
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    if (tid >= num_parts)
+        return;
+
+    int bin_x = int(ordered_particles[tid].x / size_bin);
+    int bin_y = int(ordered_particles[tid].y / size_bin);
+    int bin_num = bin_x + bin_y * num_bins_1d;
+
+    if (bin_num==0)
+      int index_first = 0;
+    else
+      int index_first = bin_counts_sum[bin_num-1];
+    if (bin_num>=num_bins-2)
+      int index_last = num_parts;
+    else
+      int index_last = bin_counts_sum[bin_num+2];
+
+    ordered_particles[tid].ax = ordered_particles[tid].ay = 0;
+    for (int j = index_first; j < index_last; j++)
+        apply_force_gpu(ordered_particles[tid], ordered_particles[j]);
 }
 
 __global__ void move_gpu(particle_t* particles, int num_parts, double size) {
@@ -65,6 +100,31 @@ __global__ void move_gpu(particle_t* particles, int num_parts, double size) {
     }
 }
 
+__device__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_counts, float size_bin_) {
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    if (tid >= num_parts) {
+      return;
+    }
+    // particle_t& part = parts[tid];
+
+    // int bin_x = int(part.x / size_bin);
+    // int bin_y = int(part.y / size_bin);
+    // int bin_num = bin_x + bin_y * num_bins;
+
+    int bin_x = int(parts[tid].x / size_bin);
+    int bin_y = int(parts[tid].y / size_bin);
+    int bin_num = bin_x + bin_y * num_bins_;
+
+    // int* cpu_bin_num = (int*) malloc(sizeof(int));
+    // cudaMemcpy(cpu_bin_num, bin_num, sizeof(int), cudaMemcpyDeviceToHost);
+
+    // std::cout << cpu_bin_num << ",\t";
+
+    // bin_counts[bin_num] = 5;
+
+    atomicAdd(&bin_counts[bin_num], 1);
+}
+
 void init_simulation(particle_t* parts, int num_parts, double size) {
     // You can use this space to initialize data objects that you may need
     // This function will be called once before the algorithm begins
@@ -72,6 +132,26 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     // Do not do any particle simulation here
 
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
+
+    num_bins_1d = int(size / cutoff);
+    num_bins = num_bins_1d*num_bins_1d
+    size_bin_counts = num_bins* sizeof(int);
+    bin_counts_host = (int*)malloc(size_bin_counts);
+    bin_counts_host_check = (int*)malloc(size_bin_counts);
+
+    std::cout << "init_simulation" << ",\t";
+
+    for (int i = 0; i < num_bins; i++) {
+        std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
+    }
+
+    cudaMalloc(&bin_counts_device, size_bin_counts);
+    cudaMemcpy(bin_counts_device, bin_counts_host, size_bin_counts, cudaMemcpyHostToDevice);
+
+
+    ordered_particles_host = new particle_t[num_parts];
+    cudaMalloc((void**)&ordered_particles_device, num_parts * sizeof(particle_t));
+    cudaMemcpy(ordered_particles_device, ordered_particles_host, num_parts * sizeof(particle_t), cudaMemcpyHostToDevice);
 
     /////
     // num_bins_side = int(size / cutoff);
@@ -131,9 +211,19 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // create_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts, size_bin, num_bins);
     /////
 
-    // Compute forces
-    compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
+    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins_1d)
+    cudaMemcpy(bin_counts_host_check, bin_counts_device, num_bins * sizeof(int), cudaMemcpyDeviceToHost);
 
-    // Move particles
-    move_gpu<<<blks, NUM_THREADS>>>(parts, num_parts, size);
+    std::cout << "new step" << ",\t";
+
+    for (int i = 0; i < num_bins; i++) {
+        std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
+    }
+
+
+    // // Compute forces
+    // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
+    //
+    // // Move particles
+    // move_gpu<<<blks, NUM_THREADS>>>(parts, num_parts, size);
 }
