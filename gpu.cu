@@ -138,9 +138,9 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
     num_bins_1d = int(size / cutoff);
-    std::cout << "size" << size << ",\t";
-    std::cout << "cutoff" << cutoff << ",\t";
-    std::cout << "num_bins_1d" << num_bins_1d << ",\t";
+    // std::cout << "size" << size << ",\t";
+    // std::cout << "cutoff" << cutoff << ",\t";
+    // std::cout << "num_bins_1d" << num_bins_1d << ",\t";
     num_bins = num_bins_1d*num_bins_1d;
     size_bin_counts = num_bins* sizeof(int);
     bin_counts_host = (int*)calloc(num_bins, sizeof(int));
@@ -221,11 +221,11 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins);
     cudaMemcpy(bin_counts_host_check, bin_counts_device, num_bins * sizeof(int), cudaMemcpyDeviceToHost);
 
-    // std::cout << "new step" << ",\t";
-    //
-    // for (int i = 0; i < num_bins; i++) {
-    //     std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
-    // }
+    std::cout << "new step" << ",\t";
+
+    for (int i = 0; i < num_bins; i++) {
+        std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
+    }
 
 
     // // Compute forces
