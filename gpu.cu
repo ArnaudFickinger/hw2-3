@@ -140,8 +140,8 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     num_bins_1d = int(size / cutoff);
     num_bins = num_bins_1d*num_bins_1d;
     size_bin_counts = num_bins* sizeof(int);
-    bin_counts_host = (int*)malloc(size_bin_counts);
-    bin_counts_host_check = (int*)malloc(size_bin_counts);
+    bin_counts_host = (int*)calloc(num_bins, sizeof(int));
+    bin_counts_host_check = (int*)calloc(num_bins, sizeof(int));
 
     std::cout << "init_simulation" << ",\t";
 
