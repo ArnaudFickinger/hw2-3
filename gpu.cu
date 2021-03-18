@@ -257,7 +257,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
 
     if (sim_number == 0) {
 
-        int* ordered_parts_check = malloc(sizeof(int) * num_parts);
+        int* ordered_parts_check = (int*) malloc(sizeof(int) * num_parts);
 
         cudaMemcpy(ordered_parts_check, ordered_particles_device, (num_parts) * sizeof(int), cudaMemcpyDeviceToHost);
 
