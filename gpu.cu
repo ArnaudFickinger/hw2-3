@@ -2,6 +2,9 @@
 #include <cuda.h>
 #include <iostream>
 
+#include <thrust/scan.h>
+#include <thrust/execution_policy.h>
+
 #define NUM_THREADS 256
 
 // Put any static global variables here that you will use throughout the simulation.
