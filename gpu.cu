@@ -220,7 +220,7 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     cudaMalloc((void**)&ordered_particles_device, num_parts * sizeof(particle_t));
     cudaMemcpy(ordered_particles_device, ordered_particles_host, num_parts * sizeof(particle_t), cudaMemcpyHostToDevice);
 
-    cudaMalloc((void**) &bin_counts_sum_device, (num_bins + 1) * sizeof(int));
+    cudaMalloc((void**) &bin_counts_sum_device, (num_bins + 1000) * sizeof(int));
     cudaMalloc((void**) &bin_counts_incremental_device, (num_bins + 1) * sizeof(int));
 
 }
@@ -256,7 +256,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     thrust::inclusive_scan(bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, binary_op);
     // 1st index of each bin
     // use bin_ids (increment it by 1)
-    //
+    // order_particle<<blks, NUM_THREADS>>(parts, num_parts, bin_counts_device, )
 
 
     // sort array
