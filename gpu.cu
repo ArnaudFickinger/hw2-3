@@ -251,9 +251,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
         std::cout << i << ": "<<  bin_counts_sum_check[i] << ",\t";
     }
 
-    order_particle<<<blks, NUM_THREADS>>>(parts, num_parts, float size_bin_, int num_bins_, bin_counts_sum, bin_counts_incremental_device_, ordered_particles_device_);
-
-
+    order_particle<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins, bin_counts_sum, bin_counts_incremental_device, ordered_particles_device);
 
     if (sim_number == 0) {
 
