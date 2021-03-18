@@ -173,7 +173,8 @@ __global__ void order_particle(particle_t* parts, int num_parts, float size_bin_
     atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
     // __syncthreads();
     int index = bin_counts_incremental_device_[bin_num] - 1;
-    cudaMemset(&ordered_particles_device_[index], tid, sizeof(int));
+    // cudaMemset(&ordered_particles_device_[index], tid, sizeof(int));
+    ordered_particles_device_[index] = tid;
     // ordered_particles_device_[bin_counts_incremental_device_[bin_num]] = parts[tid];
 
 }
