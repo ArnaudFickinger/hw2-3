@@ -252,18 +252,15 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     //     std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
     // }
 
-    // bin_counts_sum_device;
-    // cudaMalloc((void**) &bin_counts_sum_device, (num_bins + 1) * sizeof(int));
-    // cudaMalloc((void**) &bin_counts_incremental_device, (num_bins + 1) * sizeof(int));
-    //
-    // thrust::plus<int> binary_op;
-    // thrust::inclusive_scan(bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, binary_op);
+    thrust::plus<int> binary_op;
+    thrust::inclusive_scan(bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, binary_op);
     // 1st index of each bin
     // use bin_ids (increment it by 1)
     //
 
 
-    // cudaMemcpy(bin_counts_incremental_device, bin_counts_sum_device, )
+    // cudaMemcpy(bin_counts_incremental_device, bin_counts_sum_device, size_bin_counts, cudaMemcpyDeviceToDevice)
+    /
 
     // // Compute forces
     // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
