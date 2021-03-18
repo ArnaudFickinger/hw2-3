@@ -142,7 +142,7 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     atomicAdd(&bin_counts[bin_num], 1);
 }
 
-__global__ void order_particle(particle_t* parts, int num_parts, float size_bin_, int num_bins_, int* bin_counts_sum, int* bin_counts_incremental_device_, int* ordered_particles_device_) {
+__global__ void order_particle(particle_t* parts, int num_parts, float size_bin_, int num_bins_, int* bin_counts_incremental_device_, int* ordered_particles_device_) {
 
 
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -252,7 +252,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     }
 
     // particle_t* parts, int num_parts, float size_bin_, int num_bins_, int* bin_counts_sum, int* bin_counts_incremental_device_, particle_t* ordered_particles_device_
-    order_particle<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins, bin_counts_sum, bin_counts_incremental_device, ordered_particles_device);
+    order_particle<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins, bin_counts_incremental_device, ordered_particles_device);
 
     if (sim_number == 0) {
 
