@@ -162,6 +162,8 @@ __global__ void order_particle(particle_t* parts, int num_parts, int* bin_counts
     // bin_counts[bin_num] = 5;
     // bin_counts_device[bin_num]+=1;
     // bin_counts[bin_num]=bin_counts[bin_num]+1;
+
+
     // cudaMemset(&ordered_particles_device_[bin_counts_incremental_device_[bin_num]], &parts[tid], sizeof(parts[tid]))
     // ordered_particles_device_[bin_counts_incremental_device_[bin_num]] = parts[tid];
     atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
@@ -225,6 +227,8 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     cudaMalloc((void**) &bin_counts_sum_device, (num_bins + 1) * sizeof(int));
     cudaMalloc((void**) &bin_counts_incremental_device, (num_bins + 1) * sizeof(int));
+
+    bin_counts_sum_check = (int*) malloc(sizeof(int) * (num_bins + 1));
 
 }
 
