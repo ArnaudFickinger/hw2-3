@@ -259,8 +259,9 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     //
 
 
+    // sort array
     // cudaMemcpy(bin_counts_incremental_device, bin_counts_sum_device, size_bin_counts, cudaMemcpyDeviceToDevice)
-    /
+    //
 
     // // Compute forces
     // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
