@@ -241,40 +241,29 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     //
     // cudaMemset(parts_ordered_inds, -1, size * sizeof(int));
     cudaMemset(bin_counts_device, 0, num_bins * sizeof(int));
-    //
-    // int* cpu_bin_counts = (int*) malloc(num_bins * sizeof(int));
-    // cudaMemcpy(cpu_bin_counts, bin_counts, num_bins * sizeof(int), cudaMemcpyDeviceToHost);
-    //
-    // for (int i = 0; i < 2; i++) {
-    //     std::cout << i << ": "<<  cpu_bin_counts[i] << ",\t";
-    // }
-    //
-    // create_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts, size_bin, num_bins);
-    /////
-
-    // cudaMalloc((void**)&bin_counts_device, size_bin_counts);
-    // cudaMemcpy(bin_counts_device, bin_counts_host, size_bin_counts, cudaMemcpyHostToDevice);
 
     update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins_1d);
 
-    cudaMemcpy(bin_counts_host_check, bin_counts_device, size_bin_counts, cudaMemcpyDeviceToHost);
-
-    std::cout << "new step" << ",\t";
-
-    for (int i = 0; i < num_bins; i++) {
-        std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
-    }
+    // cudaMemcpy(bin_counts_host_check, bin_counts_device, size_bin_counts, cudaMemcpyDeviceToHost);
+    //
+    // std::cout << "new step" << ",\t";
+    //
+    // for (int i = 0; i < num_bins; i++) {
+    //     std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
+    // }
 
     // bin_counts_sum_device;
     // cudaMalloc((void**) &bin_counts_sum_device, (num_bins + 1) * sizeof(int));
     // cudaMalloc((void**) &bin_counts_incremental_device, (num_bins + 1) * sizeof(int));
-    // cudaMemcpy()
+    //
     // thrust::plus<int> binary_op;
     // thrust::inclusive_scan(bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, binary_op);
     // 1st index of each bin
     // use bin_ids (increment it by 1)
     //
 
+
+    // cudaMemcpy(bin_counts_incremental_device, bin_counts_sum_device, )
 
     // // Compute forces
     // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
