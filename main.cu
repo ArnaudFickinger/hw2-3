@@ -109,7 +109,7 @@ int main(int argc, char** argv) {
     std::ofstream fsave(savename);
 
     // Initialize Particles
-    int num_parts = find_int_arg(argc, argv, "-n", 1000);
+    int num_parts = find_int_arg(argc, argv, "-n", 10);
     int part_seed = find_int_arg(argc, argv, "-s", 0);
     double size = sqrt(density * num_parts);
 
