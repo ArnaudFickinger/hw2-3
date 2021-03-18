@@ -142,7 +142,7 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     atomicAdd(&bin_counts[bin_num], 1);
 }
 
-__global__ void order_particle(particle_t* parts, int num_parts, int* bin_counts, float size_bin_, int num_bins_, int* bin_counts_sum, int* bin_counts_incremental_device_, particle_t* ordered_particles_device_) {
+__global__ void order_particle(particle_t* parts, int num_parts, float size_bin_, int num_bins_, int* bin_counts_sum, int* bin_counts_incremental_device_, particle_t* ordered_particles_device_) {
 
 
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -251,14 +251,13 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
         std::cout << i << ": "<<  bin_counts_sum_check[i] << ",\t";
     }
 
-
-    order_particle<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts, float size_bin_, int num_bins_, bin_counts_sum, bin_counts_incremental_device_, ordered_particles_device_);
+    order_particle<<<blks, NUM_THREADS>>>(parts, num_parts, float size_bin_, int num_bins_, bin_counts_sum, bin_counts_incremental_device_, ordered_particles_device_);
 
 
 
     if (sim_number == 0) {
 
-        int* ordered_parts_check;
+        int* ordered_parts_check = malloc(sizeof(int) * num_parts);
 
         cudaMemcpy(ordered_parts_check, ordered_particles_device, (num_parts) * sizeof(int), cudaMemcpyDeviceToHost);
 
