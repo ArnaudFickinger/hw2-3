@@ -160,7 +160,7 @@ __global__ void order_particle(particle_t* parts, int num_parts, int* bin_counts
     // bin_counts[bin_num] = 5;
     // bin_counts_device[bin_num]+=1;
     // bin_counts[bin_num]=bin_counts[bin_num]+1;
-    //
+    // cudaMemset(bin_counts_incremental_device_[bin_num])
     // ordered_particles_device_[&bin_counts_incremental_device_[bin_num]] = &parts[tid];
     atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
 }
@@ -255,7 +255,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
 
     // thrust::plus<int> binary_op;
     // thrust::inclusive_scan(bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, binary_op);
-    thrust::exclusive_scan(thrust::host, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
+    thrust::exclusive_scan(thrust::device, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
     // 1st index of each bin
     // use bin_ids (increment it by 1)
     //
