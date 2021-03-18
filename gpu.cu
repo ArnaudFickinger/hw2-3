@@ -24,6 +24,8 @@ int* bin_counts_incremental_device;
 particle_t* ordered_particles_host;
 particle_t* ordered_particles_device;
 
+int* bin_counts_sum_check;
+
 __device__ void apply_force_gpu(particle_t& particle, particle_t& neighbor) {
     double dx = neighbor.x - particle.x;
     double dy = neighbor.y - particle.y;
@@ -160,8 +162,8 @@ __global__ void order_particle(particle_t* parts, int num_parts, int* bin_counts
     // bin_counts[bin_num] = 5;
     // bin_counts_device[bin_num]+=1;
     // bin_counts[bin_num]=bin_counts[bin_num]+1;
-    // cudaMemset(bin_counts_incremental_device_[bin_num])
-    // ordered_particles_device_[&bin_counts_incremental_device_[bin_num]] = &parts[tid];
+    // cudaMemset(&ordered_particles_device_[bin_counts_incremental_device_[bin_num]], &parts[tid], sizeof(parts[tid]))
+    // ordered_particles_device_[bin_counts_incremental_device_[bin_num]] = parts[tid];
     atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
 }
 
@@ -259,6 +261,15 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // 1st index of each bin
     // use bin_ids (increment it by 1)
     //
+
+    cudaMemcpy(bin_counts_sum_check, bin_counts_sum_device, (num_bins + 1) * sizeof(int), cudaMemcpyDeviceToHost);
+
+    std::cout << "new step" << ",\t";
+
+    for (int i = 0; i < num_bins + 1; i++) {
+        std::cout << i << ": "<<  bin_counts_sum_check[i] << ",\t";
+    }
+
 
 
     // sort array
