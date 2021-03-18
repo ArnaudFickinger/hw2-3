@@ -137,7 +137,7 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     atomicAdd(&bin_counts[bin_num], 1);
 }
 
-__global__ void order_particle(particle_t* parts, int num_parts, int* bin_counts, float size_bin_, int num_bins_) {
+__global__ void order_particle(particle_t* parts, int num_parts, int* bin_counts, float size_bin_, int num_bins_, int* bin_counts_incremental_device_, particle_t* ordered_particles_device_) {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if (tid >= num_parts) {
       return;
@@ -160,8 +160,8 @@ __global__ void order_particle(particle_t* parts, int num_parts, int* bin_counts
     // bin_counts[bin_num] = 5;
     // bin_counts_device[bin_num]+=1;
     // bin_counts[bin_num]=bin_counts[bin_num]+1;
-
-    atomicAdd(&bin_counts[bin_num], 1);
+    set ordered_particles_device_[&bin_counts_incremental_device_[bin_num]] to
+    atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
 }
 
 // __global__ void update_bin_counts_test(particle_t *parts, int num_parts, int *bin_counts, float size_bin_, int num_bins_) {
@@ -217,10 +217,10 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
 
     ordered_particles_host = new particle_t[num_parts];
-    cudaMalloc((void**)&ordered_particles_device, num_parts * sizeof(particle_t));
+    cudaMalloc((void**)&ordered_particles_device, num_parts * sizeof(particle));
     cudaMemcpy(ordered_particles_device, ordered_particles_host, num_parts * sizeof(particle_t), cudaMemcpyHostToDevice);
 
-    cudaMalloc((void**) &bin_counts_sum_device, (num_bins + 1000) * sizeof(int));
+    cudaMalloc((void**) &bin_counts_sum_device, (num_bins + 1) * sizeof(int));
     cudaMalloc((void**) &bin_counts_incremental_device, (num_bins + 1) * sizeof(int));
 
 }
@@ -253,14 +253,16 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // }
 
     thrust::plus<int> binary_op;
-    thrust::inclusive_scan(bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, binary_op);
+    // thrust::inclusive_scan(bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, binary_op);
+    thrust::exclusive_scan(thrust::host, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
     // 1st index of each bin
     // use bin_ids (increment it by 1)
-    // order_particle<<blks, NUM_THREADS>>(parts, num_parts, bin_counts_device, )
+    //
 
 
     // sort array
-    // cudaMemcpy(bin_counts_incremental_device, bin_counts_sum_device, size_bin_counts, cudaMemcpyDeviceToDevice)
+    // cudaMemcpy(bin_counts_incremental_device, bin_counts_sum_device, size_bin_counts, cudaMemcpyDeviceToDevice);
+    // order_particle<<blks, NUM_THREADS>>(parts, num_parts, bin_counts_device, size_bin, num_bins, bin_counts_incremental_device, ordered_particles_device);
     //
 
     // // Compute forces
