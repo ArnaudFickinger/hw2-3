@@ -409,7 +409,7 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     int bin_x = int(parts[tid].x / size_bin);
     int bin_y = int(parts[tid].y / size_bin);
     int bin_num = bin_x + bin_y * num_bins;
-    std::cout << bin_num << std::endl;
+
     atomicAdd(&bin_counts[bin_num], 1);
 }
 
@@ -417,7 +417,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // parts live in GPU memory
     // Rewrite this function
 
-    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_host, size_bin, num_bins_1d, num_bins);
+    // update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_host, size_bin, num_bins_1d, num_bins);
 
     // std::cout << bin_counts_host[0] << std::endl;
     for (int i = 0; i < num_bins; i++) {
