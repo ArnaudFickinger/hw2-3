@@ -439,7 +439,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     std::cout << "PRE-ORDERED CURR INDEXES" << std::endl;
     cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
     for (int i = 0; i < num_bins + 1; i++) {
-        std::cout << prefix_sum_host[i] << std::endl;
+        std::cout << curr_bin_index_host[i] << std::endl;
     }
 
     // Compute forces
