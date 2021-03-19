@@ -427,7 +427,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
 
     // std::cout << bin_counts_host[0] << std::endl;
     for (int i = 0; i < num_bins; i++) {
-        std::cout << bin_counts_host[i] << std::endl;
+        std::cout << bin_counts_dev[i] << std::endl;
     }
 
     std::cout << "end step" << std::endl;
