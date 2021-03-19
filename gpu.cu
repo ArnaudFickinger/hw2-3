@@ -426,9 +426,10 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // }
 
     cudaMemcpy(prefix_sum_dev, bin_counts_dev, num_bins * sizeof(int), cudaMemcpyDeviceToDevice);
+    cudaMemset(&prefix_sum_dev[num_bins], num_parts, sizeof(int));
     std::cout << "COPIED OVER BIN COUNTS" << std::endl;
     cudaMemcpy(prefix_sum_host, prefix_sum_dev, sizeof(int) * num_bins, cudaMemcpyDeviceToHost);
-    for (int i = 0; i < num_bins; i++) {
+    for (int i = 0; i < num_bins + 1; i++) {
         std::cout << prefix_sum_host[i] << std::endl;
     }
 
