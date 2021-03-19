@@ -420,11 +420,8 @@ __global__ void order_particles(particle_t* parts, int num_parts, float size_bin
     int bin_y = int(parts[tid].y / size_bin);
     int bin_num = bin_x + bin_y * num_bins_1d;
 
-
     int index = atomicAdd(&curr_bin_index_dev[bin_num], 1);
     ordered_parts_dev[index] = tid;
-    // int index = curr_bin_index_dev[bin_num] - 1;
-    // ordered_parts_dev[index] = 100;
 }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
@@ -463,17 +460,17 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     order_particles<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins_1d, curr_bin_index_dev, ordered_parts_dev);
 
     // DEBUG ORDERED PARTS INDEXES
-    std::cout << "ORDERED PARTS" << std::endl;
-    cudaMemcpy(ordered_parts_host, ordered_parts_dev, sizeof(int) * num_parts, cudaMemcpyDeviceToHost);
-    for (int i = 0; i < num_parts; i++) {
-        std::cout << ordered_parts_host[i] << std::endl;
-    }
-
-    std::cout << "ORDERED CURR INDEXES" << std::endl;
-    cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
-    for (int i = 0; i < num_bins + 1; i++) {
-        std::cout << curr_bin_index_host[i] << std::endl;
-    }
+    // std::cout << "ORDERED PARTS" << std::endl;
+    // cudaMemcpy(ordered_parts_host, ordered_parts_dev, sizeof(int) * num_parts, cudaMemcpyDeviceToHost);
+    // for (int i = 0; i < num_parts; i++) {
+    //     std::cout << ordered_parts_host[i] << std::endl;
+    // }
+    //
+    // std::cout << "ORDERED CURR INDEXES" << std::endl;
+    // cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
+    // for (int i = 0; i < num_bins + 1; i++) {
+    //     std::cout << curr_bin_index_host[i] << std::endl;
+    // }
 
     // Compute forces
     // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
