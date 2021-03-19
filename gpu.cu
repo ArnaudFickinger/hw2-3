@@ -430,7 +430,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     std::cout << "COPIED OVER BIN COUNTS" << std::endl;
     cudaMemcpy(prefix_sum_host, prefix_sum_dev, sizeof(int) * num_bins, cudaMemcpyDeviceToHost);
     for (int i = 0; i < num_bins + 1; i++) {
-        std::cout << prefix_sum_host[i] << std::endl;
+        std::cout << prefix_sum_dev[i] << std::endl;
     }
 
     // thrust::exclusive_scan(thrust::device, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
