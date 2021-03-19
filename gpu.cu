@@ -23,7 +23,7 @@ int* bin_counts_device;
 int* bin_counts_sum_device;
 int* bin_counts_incremental_device;
 
-particle_t* ordered_particles_host;
+int* ordered_particles_host;
 int* ordered_particles_device;
 
 int* bin_counts_sum_check;
@@ -197,10 +197,12 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     cudaMemcpy(bin_counts_device, bin_counts_host, size_bin_counts, cudaMemcpyHostToDevice);
 
 
-    ordered_particles_host = new particle_t[num_parts];
+    // ordered_particles_host = new particle_t[num_parts];
     cudaMalloc((void**)&ordered_particles_device, num_parts * sizeof(int));
-    cudaMemcpy(ordered_particles_device, ordered_particles_host, num_parts * sizeof(int), cudaMemcpyHostToDevice);
+    // cudaMemcpy(ordered_particles_device, ordered_particles_host, num_parts * sizeof(int), cudaMemcpyHostToDevice);
+    // cudaMemcpyToSymbol();
     cudaMemset(ordered_particles_device, -1, num_parts * sizeof(int));
+
 
 
     cudaMalloc((void**) &bin_counts_sum_device, (num_bins + 1) * sizeof(int));
@@ -228,9 +230,6 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // }
 
     thrust::exclusive_scan(thrust::device, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
-    // 1st index of each bin
-    // use bin_ids (increment it by 1)
-    //
 
     cudaMemcpy(bin_counts_sum_check, bin_counts_sum_device, (num_bins + 1) * sizeof(int), cudaMemcpyDeviceToHost);
 
@@ -240,7 +239,6 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
         std::cout << i << ": "<<  bin_counts_sum_check[i] << ",\t";
     }
 
-    // particle_t* parts, int num_parts, float size_bin_, int num_bins_, int* bin_counts_sum, int* bin_counts_incremental_device_, particle_t* ordered_particles_device_
     order_particle<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins, bin_counts_incremental_device, ordered_particles_device);
 
     if (sim_number == 0) {
