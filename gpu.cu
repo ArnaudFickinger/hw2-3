@@ -420,9 +420,13 @@ __global__ void order_particles(particle_t* parts, int num_parts, float size_bin
     int bin_y = int(parts[tid].y / size_bin);
     int bin_num = bin_x + bin_y * num_bins_1d;
 
+    __syncthreads();
     atomicAdd(&curr_bin_index_dev[bin_num], 1);
+    __syncthreads();
     int index = curr_bin_index_dev[bin_num] - 1;
+__syncthreads();
     ordered_parts_dev[index] = 100;
+    __syncthreads();
 }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
@@ -467,7 +471,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
         std::cout << ordered_parts_host[i] << std::endl;
     }
 
-    std::cout << "CURR BIN INDEX DEV" << std::endl;
+    std::cout << "ORDERED CURR INDEXES" << std::endl;
     cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
     for (int i = 0; i < num_bins + 1; i++) {
         std::cout << curr_bin_index_host[i] << std::endl;
