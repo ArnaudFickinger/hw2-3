@@ -280,6 +280,7 @@
 
 #include "common.h"
 #include <cuda.h>
+#include <iostream>
 
 #define NUM_THREADS 256
 
