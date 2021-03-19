@@ -302,7 +302,6 @@ int* ordered_parts_host;
 int num_bins_1d;
 int num_bins;
 float size_bin;
-// int size_bin_counts;
 
 __device__ void apply_force_gpu(particle_t& particle, particle_t& neighbor) {
     double dx = neighbor.x - particle.x;
@@ -421,7 +420,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_host, size_bin, num_bins_1d, num_bins);
 
     for (int i = 0; i < num_bins; i++) {
-        std::cout << bin_counts_host[i] << std::endl;
+        std::cout << bin_counts_dev[i] << std::endl;
     }
 
     // Compute forces
