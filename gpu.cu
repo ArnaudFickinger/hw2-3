@@ -287,7 +287,7 @@
 // Put any static global variables here that you will use throughout the simulation.
 int blks;
 
-int* bin_counts_dev;
+__device__ int* bin_counts_dev;
 int* bin_counts_host;
 
 // __device__ int* prefix_sum_dev;
@@ -376,12 +376,12 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     // __device__ int* bin_counts_dev;
     // int* bin_counts_host;
-    // cudaMalloc((void**) &bin_counts_host, num_bins * sizeof(int));
-    // cudaMemcpyToSymbol(bin_counts_dev, &bin_counts_host, sizeof(int *));
-    // cudaMemset(bin_counts_host, 0, num_bins * sizeof(int));
-    bin_counts_host = (int*) calloc(num_bins, sizeof(int));
-    cudaMalloc((void**) &bin_counts_dev, sizeof(int) * num_bins);
-    cudaMemcpy(bin_counts_dev, bin_counts_host, sizeof(int) * num_bins, cudaMemcpyHostToDevice);
+    cudaMalloc((void**) &bin_counts_host, num_bins * sizeof(int));
+    cudaMemcpyToSymbol(bin_counts_dev, &bin_counts_host, sizeof(int *));
+    cudaMemset(bin_counts_host, 0, num_bins * sizeof(int));
+    // bin_counts_host = (int*) calloc(num_bins, sizeof(int));
+    // cudaMalloc((void**) &bin_counts_dev, sizeof(int) * num_bins);
+    // cudaMemcpy(bin_counts_dev, bin_counts_host, sizeof(int) * num_bins, cudaMemcpyHostToDevice);
 
     // __device__ int* prefix_sum_dev;
     // int* prefix_sum_host;
@@ -412,7 +412,7 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     int bin_y = int(parts[tid].y / size_bin);
     int bin_num = bin_x + bin_y * num_bins;
 
-    atomicAdd(&bin_counts[bin_num], 1);
+    atomicAdd(&bin_counts_dev[bin_num], 1);
 }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
