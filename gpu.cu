@@ -376,12 +376,12 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     // __device__ int* bin_counts_dev;
     // int* bin_counts_host;
-    cudaMalloc((void**) &bin_counts_host, num_bins * sizeof(int));
-    cudaMemcpyToSymbol(bin_counts_dev, &bin_counts_host, sizeof(int *));
-    cudaMemset(bin_counts_host, 0, num_bins * sizeof(int));
-    // bin_counts_host = (int*) calloc(num_bins, sizeof(int));
-    // cudaMalloc((void**) &bin_counts_dev, sizeof(int) * num_bins);
-    // cudaMemcpy(bin_counts_dev, bin_counts_host, sizeof(int) * num_bins, cudaMemcpyHostToDevice);
+    // cudaMalloc((void**) &bin_counts_host, num_bins * sizeof(int));
+    // cudaMemcpyToSymbol(bin_counts_dev, &bin_counts_host, sizeof(int *));
+    // cudaMemset(bin_counts_host, 0, num_bins * sizeof(int));
+    bin_counts_host = (int*) calloc(num_bins, sizeof(int));
+    cudaMalloc((void**) &bin_counts_dev, sizeof(int) * num_bins);
+    cudaMemcpy(bin_counts_dev, bin_counts_host, sizeof(int) * num_bins, cudaMemcpyHostToDevice);
 
     // __device__ int* prefix_sum_dev;
     // int* prefix_sum_host;
@@ -419,7 +419,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // parts live in GPU memory
     // Rewrite this function
 
-    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_host, size_bin, num_bins_1d, num_bins);
+    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_dev, size_bin, num_bins_1d, num_bins);
     // cudaDeviceSynchronize();
     // cudaMemcpy(bin_counts_host, bin_counts_dev, sizeof(int) * num_bins, cudaMemcpyDeviceToHost);
     // cudaDeviceSynchronize();
