@@ -24,7 +24,7 @@ int* bin_counts_sum_device;
 int* bin_counts_incremental_device;
 
 int* ordered_particles_host;
-int* ordered_particles_device;
+__device__ int* ordered_particles_device;
 
 int* bin_counts_sum_check;
 
@@ -184,7 +184,6 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
-    // num_bins_1d = int(size / cutoff);
     num_bins_1d = 2;
     size_bin = size/num_bins_1d;
     num_bins = num_bins_1d*num_bins_1d;
@@ -197,11 +196,9 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     cudaMemcpy(bin_counts_device, bin_counts_host, size_bin_counts, cudaMemcpyHostToDevice);
 
 
-    // ordered_particles_host = new particle_t[num_parts];
-    cudaMalloc((void**)&ordered_particles_device, num_parts * sizeof(int));
-    // cudaMemcpy(ordered_particles_device, ordered_particles_host, num_parts * sizeof(int), cudaMemcpyHostToDevice);
-    // cudaMemcpyToSymbol();
-    cudaMemset(ordered_particles_device, -1, num_parts * sizeof(int));
+    cudaMalloc((void**)&ordered_particles_host, num_parts * sizeof(int));
+    cudaMemcpyToSymbol(ordered_particles_device, &ordered_particles_host, sizeof(int*));
+    cudaMemset(ordered_particles_host, -1, num_parts * sizeof(int));
 
 
 
