@@ -425,15 +425,17 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     //     std::cout << bin_counts_host[i] << std::endl;
     // }
 
-    cudaMemcpy(prefix_sum_dev, bin_counts_dev, num_bins * sizeof(int), cudaMemcpyDeviceToDevice);
-    cudaMemset(&prefix_sum_dev[num_bins], num_parts, sizeof(int));
+    // cudaMemcpy(prefix_sum_dev, bin_counts_dev, num_bins * sizeof(int), cudaMemcpyDeviceToDevice);
+
+    thrust::exclusive_scan(thrust::device, bin_counts_dev, bin_counts_dev + num_bins, prefix_sum_dev, 0);
+
+    // DEBUG PREFIX SUM
     std::cout << "COPIED OVER BIN COUNTS" << std::endl;
     cudaMemcpy(prefix_sum_host, prefix_sum_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
     for (int i = 0; i < num_bins + 1; i++) {
         std::cout << prefix_sum_host[i] << std::endl;
     }
 
-    // thrust::exclusive_scan(thrust::device, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
 
     // Compute forces
     // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
