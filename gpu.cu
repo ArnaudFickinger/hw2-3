@@ -412,7 +412,7 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     int bin_y = int(parts[tid].y / size_bin);
     int bin_num = bin_x + bin_y * num_bins;
 
-    atomicAdd(&bin_counts_dev[bin_num], 1);
+    atomicAdd(&bin_counts_host[bin_num], 1);
 }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
