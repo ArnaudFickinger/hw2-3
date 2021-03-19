@@ -292,8 +292,8 @@ int blks;
 int* bin_counts_dev;
 int* bin_counts_host;
 
-// __device__ int* prefix_sum_dev;
-// int* prefix_sum_host;
+int* prefix_sum_dev;
+int* prefix_sum_host;
 //
 // __device__ int* curr_bin_index_dev;
 // int* curr_bin_index_host;
@@ -376,23 +376,15 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     size_bin = size / num_bins_1d;
     num_bins = num_bins_1d * num_bins_1d;
 
-    // __device__ int* bin_counts_dev;
-    // int* bin_counts_host;
-    // // cudaMalloc((void**) &bin_counts_host, num_bins * sizeof(int));
-    // // cudaMemcpyToSymbol(bin_counts_dev, &bin_counts_host, sizeof(int *));
-    // // cudaMemset(bin_counts_host, 0, num_bins * sizeof(int));
-
-
+    // DEBUGGING:
     bin_counts_host = (int*) calloc(num_bins, sizeof(int));
     cudaMalloc((void**) &bin_counts_dev, sizeof(int) * num_bins);
     cudaMemset(bin_counts_dev, 0, num_bins * sizeof(int));
-    // cudaMemcpy(bin_counts_dev, bin_counts_host, sizeof(int) * num_bins, cudaMemcpyHostToDevice);
 
-    // __device__ int* prefix_sum_dev;
+    // int* prefix_sum_dev;
     // int* prefix_sum_host;
-    // cudaMalloc((void**) &prefix_sum_host, (num_bins + 1) * sizeof(int));
-    // cudaMemcpyToSymbol(prefix_sum_dev, &prefix_sum_host, sizeof(int *));
-    // cudaMemset(prefix_sum_host, 0, (num_bins + 1) * sizeof(int));
+    prefix_sum_host = (int*) calloc(num_bins+1, sizeof(int));
+    cudaMalloc((void**) &prefix_sum_dev, sizeof(int) * (num_bins + 1));
 
     // __device__ int* curr_bin_index_dev;
     // int* curr_bin_index_host;
@@ -427,10 +419,17 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_dev, size_bin, num_bins_1d, num_bins);
 
     // DEBUG BIN COUNTS
-    std::cout << "BIN COUNTS" << std::endl;
-    cudaMemcpy(bin_counts_host, bin_counts_dev, sizeof(int) * num_bins, cudaMemcpyDeviceToHost);
+    // std::cout << "BIN COUNTS" << std::endl;
+    // cudaMemcpy(bin_counts_host, bin_counts_dev, sizeof(int) * num_bins, cudaMemcpyDeviceToHost);
+    // for (int i = 0; i < num_bins; i++) {
+    //     std::cout << bin_counts_host[i] << std::endl;
+    // }
+
+    cudaMemcpy(prefix_sum_dev, bin_counts_dev, num_bins * sizeof(int), cudaMemcpyDeviceToDevice);
+    std::cout << "COPIED OVER BIN COUNTS" << std::endl;
+    cudaMemcpy(prefix_sum_host, prefix_sum_dev, sizeof(int) * num_bins, cudaMemcpyDeviceToHost);
     for (int i = 0; i < num_bins; i++) {
-        std::cout << bin_counts_host[i] << std::endl;
+        std::cout << prefix_sum_host[i] << std::endl;
     }
 
     // thrust::exclusive_scan(thrust::device, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
