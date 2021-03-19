@@ -290,14 +290,14 @@ int blks;
 int* bin_counts_dev;
 int* bin_counts_host;
 
-__device__ int* prefix_sum_dev;
-int* prefix_sum_host;
-
-__device__ int* curr_bin_index_dev;
-int* curr_bin_index_host;
-
-__device__ int* ordered_parts_dev; // each entry is the particle's index in parts
-int* ordered_parts_host;
+// __device__ int* prefix_sum_dev;
+// int* prefix_sum_host;
+//
+// __device__ int* curr_bin_index_dev;
+// int* curr_bin_index_host;
+//
+// __device__ int* ordered_parts_dev; // each entry is the particle's index in parts
+// int* ordered_parts_host;
 
 int num_bins_1d;
 int num_bins;
@@ -385,21 +385,21 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     // __device__ int* prefix_sum_dev;
     // int* prefix_sum_host;
-    cudaMalloc((void**) &prefix_sum_host, (num_bins + 1) * sizeof(int));
-    cudaMemcpyToSymbol(prefix_sum_dev, &prefix_sum_host, sizeof(int *));
-    cudaMemset(prefix_sum_host, 0, (num_bins + 1) * sizeof(int));
+    // cudaMalloc((void**) &prefix_sum_host, (num_bins + 1) * sizeof(int));
+    // cudaMemcpyToSymbol(prefix_sum_dev, &prefix_sum_host, sizeof(int *));
+    // cudaMemset(prefix_sum_host, 0, (num_bins + 1) * sizeof(int));
 
     // __device__ int* curr_bin_index_dev;
     // int* curr_bin_index_host;
-    cudaMalloc((void**) &curr_bin_index_host, (num_bins + 1) * sizeof(int));
-    cudaMemcpyToSymbol(curr_bin_index_dev, &curr_bin_index_host, sizeof(int *));
-    cudaMemset(curr_bin_index_host, 0, (num_bins + 1) * sizeof(int));
+    // cudaMalloc((void**) &curr_bin_index_host, (num_bins + 1) * sizeof(int));
+    // cudaMemcpyToSymbol(curr_bin_index_dev, &curr_bin_index_host, sizeof(int *));
+    // cudaMemset(curr_bin_index_host, 0, (num_bins + 1) * sizeof(int));
 
     // __device__ int* ordered_parts_dev;
     // int* ordered_parts_host;
-    cudaMalloc((void**) &ordered_parts_host, num_parts * sizeof(int));
-    cudaMemcpyToSymbol(ordered_parts_dev, &ordered_parts_host, sizeof(int *));
-    cudaMemset(ordered_parts_host, 0, num_parts * sizeof(int));
+    // cudaMalloc((void**) &ordered_parts_host, num_parts * sizeof(int));
+    // cudaMemcpyToSymbol(ordered_parts_dev, &ordered_parts_host, sizeof(int *));
+    // cudaMemset(ordered_parts_host, 0, num_parts * sizeof(int));
 }
 
 __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_counts, float size_bin, int num_bins_1d, int num_bins) {
@@ -412,7 +412,7 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     // int bin_y = int(parts[tid].y / size_bin);
     // int bin_num = bin_x + bin_y * num_bins;
     // atomicAdd(&bin_counts[bin_num], 1);
-    atomicAdd(&bin_counts[0], 1);
+    atomicAdd(bin_counts[0], 1);
     bin_counts[0] = 100;
 }
 
