@@ -4,6 +4,9 @@
 #include <thrust/scan.h>
 #include <thrust/execution_policy.h>
 
+#include <thrust/scan.h>
+#include <thrust/execution_policy.h>
+
 #define NUM_THREADS 256
 
 // Put any static global variables here that you will use throughout the simulation.
@@ -17,8 +20,15 @@ int* bin_counts_host;
 int* bin_counts_host_check;
 int* bin_counts_device;
 
+int* bin_counts_sum_device;
+int* bin_counts_incremental_device;
+
 particle_t* ordered_particles_host;
-particle_t* ordered_particles_device;
+int* ordered_particles_device;
+
+int* bin_counts_sum_check;
+
+int sim_number = 0;
 
 __device__ void apply_force_gpu(particle_t& particle, particle_t& neighbor) {
     double dx = neighbor.x - particle.x;
@@ -51,6 +61,7 @@ __global__ void compute_forces_gpu_naive(particle_t* particles, int num_parts) {
 
 __global__ void compute_forces_gpu(particle_t* ordered_particles, int* bin_counts_sum, int num_parts_, float size_bin_, int num_bins_1d_, int num_bins_) {
     // Get thread (particle) ID
+    bin_counts_sum[num_bins_] = num_parts_;
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if (tid >= num_parts_)
         return;
@@ -133,36 +144,66 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     atomicAdd(&bin_counts[bin_num], 1);
 }
 
-__global__ void update_bin_counts_test(particle_t *parts, int num_parts, int *bin_counts, float size_bin_, int num_bins_) {
+__global__ void order_particle(particle_t* parts, int num_parts, float size_bin_, int num_bins_, int* bin_counts_incremental_device_, int* ordered_particles_device_) {
 
-    // bin_counts[0]=1;
-    atomicAdd(&bin_counts[0], 1);
-    // bin_counts[bin_num]+=1;
 
-    // atomicAdd(&bin_counts[bin_num], 1);
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    if (tid >= num_parts) {
+      return;
+    }
+    // particle_t& part = parts[tid];
+
+    // int bin_x = int(part.x / size_bin);
+    // int bin_y = int(part.y / size_bin);
+    // int bin_num = bin_x + bin_y * num_bins;
+
+    int bin_x = int(parts[tid].x / size_bin_);
+    int bin_y = int(parts[tid].y / size_bin_);
+    int bin_num = bin_x + bin_y * num_bins_;
+
+    // int* cpu_bin_num = (int*) malloc(sizeof(int));
+    // cudaMemcpy(cpu_bin_num, bin_num, sizeof(int), cudaMemcpyDeviceToHost);
+
+    // std::cout << cpu_bin_num << ",\t";
+
+    // bin_counts[bin_num] = 5;
+    // bin_counts_device[bin_num]+=1;
+    // bin_counts[bin_num]=bin_counts[bin_num]+1;
+
+
+    // needs to be atomic
+    // atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
+    // __syncthreads();
+    // int index = bin_counts_incremental_device_[bin_num] - 1;
+    // // cudaMemset(&ordered_particles_device_[index], tid, sizeof(int));
+    // ordered_particles_device_[index] = tid;
+    // ordered_particles_device_[bin_counts_incremental_device_[bin_num]] = parts[tid];
+
+    int index = bin_counts_incremental_device_[bin_num];
+    int i = 0;
+    while (true) {
+        // if (ordered_particles_device_[index] == -1) {
+            ordered_particles_device_[index] = tid;
+            // break;
+        // } else {
+            // index++;
+        // }
+        if (i == 10) {
+            break;
+        }
+        i++;
+    }
+
 }
 
-__global__ void scan(float *g_odata, float *g_idata, int n)
-{
- extern __shared__ float temp[]; // allocated on invocation
- int thid = threadIdx.x;
- int pout = 0, pin = 1;
- // load input into shared memory.
- // This is exclusive scan, so shift right by one and set first elt to 0
- temp[pout*n + thid] = (thid > 0) ? g_idata[thid-1] : 0;
- __syncthreads();
- for (int offset = 1; offset < n; offset *= 2)
- {
- pout = 1 - pout; // swap double buffer indices
- pin = 1 - pout;
- if (thid >= offset)
- temp[pout*n+thid] += temp[pin*n+thid - offset];
- else
- temp[pout*n+thid] = temp[pin*n+thid];
- __syncthreads();
- }
- g_odata[thid] = temp[pout*n+thid1]; // write output
-}
+// __global__ void update_bin_counts_test(particle_t *parts, int num_parts, int *bin_counts, float size_bin_, int num_bins_) {
+//
+//     // bin_counts[0]=1;
+//     atomicAdd(&bin_counts[0], 1);
+//     // bin_counts[bin_num]+=1;
+//
+//     // atomicAdd(&bin_counts[bin_num], 1);
+// }
 
 void init_simulation(particle_t* parts, int num_parts, double size) {
     // You can use this space to initialize data objects that you may need
@@ -172,7 +213,8 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
-    num_bins_1d = int(size / cutoff);
+    // num_bins_1d = int(size / cutoff);
+    num_bins_1d = 2;
     size_bin = size/num_bins_1d;
     num_bins = num_bins_1d*num_bins_1d;
     size_bin_counts = num_bins* sizeof(int);
@@ -185,8 +227,15 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
 
     ordered_particles_host = new particle_t[num_parts];
-    cudaMalloc((void**)&ordered_particles_device, num_parts * sizeof(particle_t));
-    cudaMemcpy(ordered_particles_device, ordered_particles_host, num_parts * sizeof(particle_t), cudaMemcpyHostToDevice);
+    cudaMalloc((void**)&ordered_particles_device, num_parts * sizeof(int));
+    cudaMemcpy(ordered_particles_device, ordered_particles_host, num_parts * sizeof(int), cudaMemcpyHostToDevice);
+    cudaMemset(ordered_particles_device, -1, num_parts * sizeof(int));
+
+
+    cudaMalloc((void**) &bin_counts_sum_device, (num_bins + 1) * sizeof(int));
+    cudaMalloc((void**) &bin_counts_incremental_device, (num_bins + 1) * sizeof(int));
+
+    bin_counts_sum_check = (int*) malloc(sizeof(int) * (num_bins + 1));
 
 }
 
@@ -195,41 +244,51 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // parts live in GPU memory
     // Rewrite this function
 
-    /////
-    // if (!parts_ordered_inds) {
-    //     cudaMalloc((void**) &parts_ordered_inds, size * sizeof(int));
-    // }
-    //
-    // if (!bin_counts) {
-    //     cudaMalloc((void**) &bin_counts, num_bins * sizeof(int));
-    // }
-    //
-    // cudaMemset(parts_ordered_inds, -1, size * sizeof(int));
-    // cudaMemset(bin_counts, 0, num_bins * sizeof(int));
-    //
-    // int* cpu_bin_counts = (int*) malloc(num_bins * sizeof(int));
-    // cudaMemcpy(cpu_bin_counts, bin_counts, num_bins * sizeof(int), cudaMemcpyDeviceToHost);
-    //
-    // for (int i = 0; i < 2; i++) {
-    //     std::cout << i << ": "<<  cpu_bin_counts[i] << ",\t";
-    // }
-    //
-    // create_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts, size_bin, num_bins);
-    /////
-
-    cudaMalloc((void**)&bin_counts_device, size_bin_counts);
-    cudaMemcpy(bin_counts_device, bin_counts_host, size_bin_counts, cudaMemcpyHostToDevice);
+    cudaMemset(bin_counts_device, 0, num_bins * sizeof(int));
 
     update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_device, size_bin, num_bins_1d);
 
-    cudaMemcpy(bin_counts_host_check, bin_counts_device, size_bin_counts, cudaMemcpyDeviceToHost);
+    // cudaMemcpy(bin_counts_host_check, bin_counts_device, size_bin_counts, cudaMemcpyDeviceToHost);
+    //
+    // std::cout << "new step" << ",\t";
+    //
+    // for (int i = 0; i < num_bins; i++) {
+    //     std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
+    // }
+
+    thrust::exclusive_scan(thrust::device, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
+    // 1st index of each bin
+    // use bin_ids (increment it by 1)
+    //
+
+    cudaMemcpy(bin_counts_sum_check, bin_counts_sum_device, (num_bins + 1) * sizeof(int), cudaMemcpyDeviceToHost);
 
     std::cout << "new step" << ",\t";
 
-    for (int i = 0; i < num_bins; i++) {
-        std::cout << i << ": "<<  bin_counts_host_check[i] << ",\t";
+    for (int i = 0; i < num_bins + 1; i++) {
+        std::cout << i << ": "<<  bin_counts_sum_check[i] << ",\t";
     }
 
+    // particle_t* parts, int num_parts, float size_bin_, int num_bins_, int* bin_counts_sum, int* bin_counts_incremental_device_, particle_t* ordered_particles_device_
+    order_particle<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins, bin_counts_incremental_device, ordered_particles_device);
+
+    if (sim_number == 0) {
+
+        int* ordered_parts_check = (int*) malloc(sizeof(int) * num_parts);
+
+        cudaMemcpy(ordered_parts_check, ordered_particles_device, (num_parts) * sizeof(int), cudaMemcpyDeviceToHost);
+
+        for (int i = 0; i < num_parts; i++) {
+            std::cout << i << ": "<<  ordered_parts_check[i] << ",\t";
+        }
+    }
+
+
+    sim_number++;
+    // sort array
+    // cudaMemcpy(bin_counts_incremental_device, bin_counts_sum_device, size_bin_counts, cudaMemcpyDeviceToDevice);
+    // order_particle<<blks, NUM_THREADS>>(parts, num_parts, bin_counts_device, size_bin, num_bins, bin_counts_incremental_device, ordered_particles_device);
+    //
 
     // // Compute forces
     // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
