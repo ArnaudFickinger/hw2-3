@@ -130,7 +130,7 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     atomicAdd(&bin_counts[bin_num], 1);
 }
 
-__global__ void order_particle(particle_t* parts, int num_parts, float size_bin_, int num_bins_, int* bin_counts_incremental_device_, int* ordered_particles_device_) {
+__device__ void order_particle(particle_t* parts, int num_parts, float size_bin_, int num_bins_, int* bin_counts_incremental_device_, int* ordered_particles_device_) {
 
 
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -143,27 +143,28 @@ __global__ void order_particle(particle_t* parts, int num_parts, float size_bin_
     int bin_num = bin_x + bin_y * num_bins_;
 
     // needs to be atomic
-    // atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
     // __syncthreads();
     // int index = bin_counts_incremental_device_[bin_num] - 1;
-    // // cudaMemset(&ordered_particles_device_[index], tid, sizeof(int));
-    // ordered_particles_device_[index] = tid;
-    // ordered_particles_device_[bin_counts_incremental_device_[bin_num]] = parts[tid];
+    // cudaMemset(&ordered_particles_device_[index], tid, sizeof(int));
 
     int index = bin_counts_incremental_device_[bin_num];
-    int i = 0;
-    while (true) {
-        // if (ordered_particles_device_[index] == -1) {
-            ordered_particles_device_[index] = tid;
-            // break;
-        // } else {
-            // index++;
-        // }
-        if (i == 10) {
-            break;
-        }
-        i++;
-    }
+    ordered_particles_device_[index] = tid;
+    atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
+
+    // int index = bin_counts_incremental_device_[bin_num];
+    // int i = 0;
+    // while (true) {
+    //     // if (ordered_particles_device_[index] == -1) {
+    //         ordered_particles_device_[index] = tid;
+    //         // break;
+    //     // } else {
+    //         // index++;
+    //     // }
+    //     if (i == 10) {
+    //         break;
+    //     }
+    //     i++;
+    // }
 
 }
 
