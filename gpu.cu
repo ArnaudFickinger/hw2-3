@@ -287,7 +287,7 @@
 // Put any static global variables here that you will use throughout the simulation.
 int blks;
 
-__device__ int* bin_counts_dev;
+int* bin_counts_dev;
 int* bin_counts_host;
 
 __device__ int* prefix_sum_dev;
