@@ -422,7 +422,7 @@ __global__ void order_particles(particle_t* parts, int num_parts, float size_bin
 
     int index = curr_bin_index_dev[bin_num];
     atomicAdd(&curr_bin_index_dev[bin_num], 1);
-    ordered_parts_dev[index] = tid;
+    ordered_parts_dev[index] = 100;
 }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
