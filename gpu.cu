@@ -122,24 +122,10 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     if (tid >= num_parts) {
       return;
     }
-    // particle_t& part = parts[tid];
-
-    // int bin_x = int(part.x / size_bin);
-    // int bin_y = int(part.y / size_bin);
-    // int bin_num = bin_x + bin_y * num_bins;
 
     int bin_x = int(parts[tid].x / size_bin_);
     int bin_y = int(parts[tid].y / size_bin_);
     int bin_num = bin_x + bin_y * num_bins_;
-
-    // int* cpu_bin_num = (int*) malloc(sizeof(int));
-    // cudaMemcpy(cpu_bin_num, bin_num, sizeof(int), cudaMemcpyDeviceToHost);
-
-    // std::cout << cpu_bin_num << ",\t";
-
-    // bin_counts[bin_num] = 5;
-    // bin_counts_device[bin_num]+=1;
-    // bin_counts[bin_num]=bin_counts[bin_num]+1;
 
     atomicAdd(&bin_counts[bin_num], 1);
 }
@@ -151,25 +137,10 @@ __global__ void order_particle(particle_t* parts, int num_parts, float size_bin_
     if (tid >= num_parts) {
       return;
     }
-    // particle_t& part = parts[tid];
-
-    // int bin_x = int(part.x / size_bin);
-    // int bin_y = int(part.y / size_bin);
-    // int bin_num = bin_x + bin_y * num_bins;
 
     int bin_x = int(parts[tid].x / size_bin_);
     int bin_y = int(parts[tid].y / size_bin_);
     int bin_num = bin_x + bin_y * num_bins_;
-
-    // int* cpu_bin_num = (int*) malloc(sizeof(int));
-    // cudaMemcpy(cpu_bin_num, bin_num, sizeof(int), cudaMemcpyDeviceToHost);
-
-    // std::cout << cpu_bin_num << ",\t";
-
-    // bin_counts[bin_num] = 5;
-    // bin_counts_device[bin_num]+=1;
-    // bin_counts[bin_num]=bin_counts[bin_num]+1;
-
 
     // needs to be atomic
     // atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
@@ -181,7 +152,6 @@ __global__ void order_particle(particle_t* parts, int num_parts, float size_bin_
 
     int index = bin_counts_incremental_device_[bin_num];
     int i = 0;
-
     while (true) {
         // if (ordered_particles_device_[index] == -1) {
             ordered_particles_device_[index] = tid;
