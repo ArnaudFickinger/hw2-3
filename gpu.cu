@@ -181,6 +181,7 @@ __global__ void order_particle(particle_t* parts, int num_parts, float size_bin_
 
     int index = bin_counts_incremental_device_[bin_num];
     int i = 0;
+
     while (true) {
         // if (ordered_particles_device_[index] == -1) {
             ordered_particles_device_[index] = tid;
