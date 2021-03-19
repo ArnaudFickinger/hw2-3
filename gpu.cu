@@ -402,7 +402,7 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     // cudaMemset(ordered_parts_host, 0, num_parts * sizeof(int));
 }
 
-__global__ void update_bin_counts(particle_t* parts, int num_parts, float size_bin, int num_bins_1d, int num_bins) {
+__global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_counts, float size_bin, int num_bins_1d, int num_bins) {
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if (tid >= num_parts) {
       return;
@@ -412,14 +412,14 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, float size_b
     int bin_y = int(parts[tid].y / size_bin);
     int bin_num = bin_x + bin_y * num_bins;
 
-    atomicAdd(&bin_counts_dev[bin_num], 1);
+    atomicAdd(&bin_counts_host[bin_num], 1);
 }
 
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // parts live in GPU memory
     // Rewrite this function
 
-    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins_1d, num_bins);
+    update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_dev, size_bin, num_bins_1d, num_bins);
     // cudaDeviceSynchronize();
     // cudaMemcpy(bin_counts_host, bin_counts_dev, sizeof(int) * num_bins, cudaMemcpyDeviceToHost);
     // cudaDeviceSynchronize();
