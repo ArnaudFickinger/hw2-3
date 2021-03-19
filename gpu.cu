@@ -376,9 +376,10 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     // __device__ int* bin_counts_dev;
     // int* bin_counts_host;
-    cudaMalloc((void**) &bin_counts_host, num_bins * sizeof(int));
-    cudaMemcpyToSymbol(bin_counts_dev, &bin_counts_host, sizeof(int *));
-    cudaMemset(bin_counts_host, 0, num_bins * sizeof(int));
+    // cudaMalloc((void**) &bin_counts_host, num_bins * sizeof(int));
+    // cudaMemcpyToSymbol(bin_counts_dev, &bin_counts_host, sizeof(int *));
+    // cudaMemset(bin_counts_host, 0, num_bins * sizeof(int));
+    bin_counts_host = (int*) calloc(num_bins, sizeof(int));
 
     // __device__ int* prefix_sum_dev;
     // int* prefix_sum_host;
