@@ -433,7 +433,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     //     std::cout << bin_counts_host[i] << std::endl;
     // }
 
-    thrust::exclusive_scan(thrust::device, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
+    // thrust::exclusive_scan(thrust::device, bin_counts_device, bin_counts_device + num_bins, bin_counts_sum_device, 0);
 
     // Compute forces
     // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
