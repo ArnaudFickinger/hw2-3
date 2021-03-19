@@ -403,7 +403,7 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 }
 
 __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_counts, float size_bin, int num_bins_1d, int num_bins) {
-    // int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if (tid >= num_parts) {
       return;
     }
