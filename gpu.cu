@@ -418,9 +418,10 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
 
     update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_host, size_bin, num_bins_1d, num_bins);
 
-    for (int i = 0; i < num_bins; i++) {
-        std::cout << bin_counts_host[i] << std::endl;
-    }
+    std::cout << bin_counts_host[0] << std::endl;
+    // for (int i = 0; i < num_bins; i++) {
+    //     std::cout << bin_counts_host[i] << std::endl;
+    // }
 
     // Compute forces
     // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
