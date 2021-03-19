@@ -410,6 +410,21 @@ __global__ void update_bin_counts(particle_t* parts, int num_parts, int* bin_cou
     atomicAdd(&bin_counts[bin_num], 1);
 }
 
+__global__ void order_particles(particle_t* parts, int num_parts, float size_bin, int num_bins_1d, int* curr_bin_index_dev, int* ordered_parts_dev) {
+    int tid = threadIdx.x + blockIdx.x * blockDim.x;
+    if (tid >= num_parts) {
+      return;
+    }
+
+    int bin_x = int(parts[tid].x / size_bin);
+    int bin_y = int(parts[tid].y / size_bin);
+    int bin_num = bin_x + bin_y * num_bins_1d;
+
+    int index = curr_bin_index_dev[bin_num];
+    ordered_parts_dev[index] = tid;
+    atomicAdd(&bin_counts_incremental_device_[bin_num], 1);
+}
+
 void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // parts live in GPU memory
     // Rewrite this function
@@ -417,31 +432,40 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     update_bin_counts<<<blks, NUM_THREADS>>>(parts, num_parts, bin_counts_dev, size_bin, num_bins_1d, num_bins);
 
     // DEBUG BIN COUNTS
-    std::cout << "BIN COUNTS" << std::endl;
-    cudaMemcpy(bin_counts_host, bin_counts_dev, sizeof(int) * num_bins, cudaMemcpyDeviceToHost);
-    for (int i = 0; i < num_bins; i++) {
-        std::cout << bin_counts_host[i] << std::endl;
-    }
+    // std::cout << "BIN COUNTS" << std::endl;
+    // cudaMemcpy(bin_counts_host, bin_counts_dev, sizeof(int) * num_bins, cudaMemcpyDeviceToHost);
+    // for (int i = 0; i < num_bins; i++) {
+    //     std::cout << bin_counts_host[i] << std::endl;
+    // }
 
     // cudaMemcpy(prefix_sum_dev, bin_counts_dev, num_bins * sizeof(int), cudaMemcpyDeviceToDevice);
 
     thrust::exclusive_scan(thrust::device, bin_counts_dev, bin_counts_dev + num_bins, prefix_sum_dev, 0);
 
     // DEBUG PREFIX SUM
-    std::cout << "PREFIX SUM" << std::endl;
-    cudaMemcpy(prefix_sum_host, prefix_sum_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
-    for (int i = 0; i < num_bins + 1; i++) {
-        std::cout << prefix_sum_host[i] << std::endl;
-    }
+    // std::cout << "PREFIX SUM" << std::endl;
+    // cudaMemcpy(prefix_sum_host, prefix_sum_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
+    // for (int i = 0; i < num_bins + 1; i++) {
+    //     std::cout << prefix_sum_host[i] << std::endl;
+    // }
 
     cudaMemcpy(curr_bin_index_dev, prefix_sum_dev, (num_bins + 1) * sizeof(int), cudaMemcpyDeviceToDevice);
 
-    std::cout << "PRE-ORDERED CURR INDEXES" << std::endl;
-    cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
-    for (int i = 0; i < num_bins + 1; i++) {
-        std::cout << curr_bin_index_host[i] << std::endl;
-    }
+    // DEBUG PRE-ORDERED CURR INDEXES
+    // std::cout << "PRE-ORDERED CURR INDEXES" << std::endl;
+    // cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
+    // for (int i = 0; i < num_bins + 1; i++) {
+    //     std::cout << curr_bin_index_host[i] << std::endl;
+    // }
 
+    order_particles<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins_1d, curr_bin_index_dev, ordered_parts_dev);
+
+    // DEBUG ORDERED PARTS INDEXES
+    std::cout << "ORDERED PARTS" << std::endl;
+    cudaMemcpy(ordered_parts_host, ordered_parts_dev, sizeof(int) * num_parts, cudaMemcpyDeviceToHost);
+    for (int i = 0; i < num_parts; i++) {
+        std::cout << ordered_parts_host[i] << std::endl;
+    }
     // Compute forces
     // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
 
