@@ -323,6 +323,15 @@ __device__ void apply_force_gpu(particle_t& particle, particle_t& neighbor) {
     particle.ay += coef * dy;
 }
 
+__device__ void compute_forces_bin(particles_t* particles, int* prefix_sum_dev, int* ordered_parts_dev, int tid, int bin_num, int num_parts, int num_bins) {
+
+    int curr_offset = prefix_sum_dev[bin_num];
+    int stop_offset = (bin_num + 1 >= num_bins) ? num_parts : prefix_sum_dev[bin_num + 1];
+
+    for (int j = curr_offset; j < stop_offset; j++)
+        apply_force_gpu(particles[tid], particles[ordered_parts_dev[j]]);
+}
+
 __global__ void compute_forces_gpu(particle_t* parts, int num_parts, float size_bin, int num_bins_1d, int* prefix_sum_dev, int* ordered_parts_dev, int num_bins) {
     // Get thread (particle) ID
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
@@ -453,15 +462,6 @@ __global__ void compute_forces_gpu(particle_t* parts, int num_parts, float size_
 
     // for (int j = 0; j < num_parts; j++)
     //     apply_force_gpu(particles[tid], particles[j]);
-}
-
-__device__ void compute_forces_bin(particles_t* particles, int* prefix_sum_dev, int* ordered_parts_dev, int tid, int bin_num, int num_parts, int num_bins) {
-
-    int curr_offset = prefix_sum_dev[bin_num];
-    int stop_offset = (bin_num + 1 >= num_bins) ? num_parts : prefix_sum_dev[bin_num + 1];
-
-    for (int j = curr_offset; j < stop_offset; j++)
-        apply_force_gpu(particles[tid], particles[ordered_parts_dev[j]]);
 }
 
 __global__ void move_gpu(particle_t* particles, int num_parts, double size) {
