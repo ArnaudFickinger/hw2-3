@@ -611,5 +611,5 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     move_gpu<<<blks, NUM_THREADS>>>(parts, num_parts, size);
 
     cudaMemset(bin_counts_dev, 0, num_bins * sizeof(int));
-    std::cout << "end step" << std::endl;
+    // std::cout << "end step" << std::endl;
 }
