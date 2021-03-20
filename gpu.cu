@@ -323,15 +323,145 @@ __device__ void apply_force_gpu(particle_t& particle, particle_t& neighbor) {
     particle.ay += coef * dy;
 }
 
-__global__ void compute_forces_gpu(particle_t* particles, int num_parts) {
+__global__ void compute_forces_gpu(particle_t* parts, int num_parts, float size_bin, int num_bins_1d, int* prefix_sum_dev, int* ordered_parts_dev, int num_bins) {
     // Get thread (particle) ID
     int tid = threadIdx.x + blockIdx.x * blockDim.x;
     if (tid >= num_parts)
         return;
 
-    particles[tid].ax = particles[tid].ay = 0;
-    for (int j = 0; j < num_parts; j++)
-        apply_force_gpu(particles[tid], particles[j]);
+    parts[tid].ax = parts[tid].ay = 0;
+
+    // calculate own bin num
+    int bin_x = int(parts[tid].x / size_bin);
+    int bin_y = int(parts[tid].y / size_bin);
+    int bin_num = bin_x + bin_y * num_bins_1d;
+
+    int left_bin = -1;
+    int right_bin = -1;
+    int bottom_bin = -1;
+    int top_bin = -1;
+    int self_bin = bin_num;
+    int top_left_bin = -1;
+    int top_right_bin = -1;
+    int bottom_left_bin = -1;
+    int bottom_right_bin = -1;
+
+    if (int(bin_num / num_bins_1d) == 0) { // At top side
+        if (bin_num % num_bins_1d == 0) { // top left corner
+            right_bin = bin_num + 1;
+            bottom_bin = bin_num + num_bins_1d;
+            bottom_right_bin = bin_num + num_bins_1d + 1;
+            // std::vector<int> vect{ i, i+1, i+num_bins_1d, i + num_bins_1d + 1 };
+        } else if (bin_num % num_bins_1d == num_bins_1d - 1) { // top right corner
+            left_bin = bin_num - 1;
+            bottom_bin = bin_num + num_bins_1d;
+            bottom_left_bin = bin_num + num_bins_1d - 1;
+            // std::vector<int> vect{ i, i-1, i+num_bins, i + num_bins - 1};
+        } else {
+            left_bin = bin_num - 1;
+            bottom_left_bin = bin_num + num_bins_1d - 1;
+            right_bin = bin_num + 1;
+            bottom_bin = bin_num + num_bins_1d;
+            bottom_right_bin = bin_num + num_bins_1d + 1;
+            // std::vector<int> vect{ i - 1, i, i + 1, i - 1 + num_bins, i + num_bins, i + 1 + num_bins };
+        }
+    } else if (int(bin_num / num_bins_1d) == num_bins_1d - 1) { // bottom side
+        if (bin_num % num_bins_1d == 0) { // bottom left corner
+            right_bin = bin_num + 1;
+            top_bin = bin_num - num_bins_1d;
+            top_right_bin = bin_num - num_bins_1d + 1;
+            // std::vector<int> vect{ i, i+1, i - num_bins, i - num_bins + 1};
+        } else if (bin_num % num_bins_1d == num_bins_1d - 1) { // bottom right corner
+            left_bin = bin_num - 1;
+            top_bin = bin_num - num_bins_1d;
+            top_left_bin = bin_num - num_bins_1d - 1;
+            // std::vector<int> vect{ i, i - 1, i - num_bins, i - num_bins - 1};
+        } else {
+            right_bin = bin_num + 1;
+            top_bin = bin_num - num_bins_1d;
+            top_right_bin = bin_num - num_bins_1d + 1;
+            left_bin = bin_num - 1;
+            top_left_bin = bin_num - num_bins_1d - 1;
+            // std::vector<int> vect{ i - 1 - num_bins, i - num_bins, i + 1 - num_bins, i - 1, i, i + 1};
+        }
+    } else {
+      if (bin_num % num_bins_1d == 0) { // left side
+          right_bin = bin_num + 1;
+          top_bin = bin_num - num_bins_1d;
+          top_right_bin = bin_num - num_bins_1d + 1;
+          bottom_bin = bin_num + num_bins_1d;
+          bottom_right_bin = bin_num + num_bins_1d + 1;
+          // std::vector<int> vect{ i - num_bins, i+1 - num_bins, i, i + 1, i + num_bins, i + 1 + num_bins};
+      } else if (bin_num % num_bins_1d == num_bins_1d - 1) { // right side
+          left_bin = bin_num - 1;
+          top_bin = bin_num - num_bins_1d;
+          top_left_bin = bin_num - num_bins_1d - 1;
+          bottom_bin = bin_num + num_bins_1d;
+          bottom_left_bin = bin_num + num_bins_1d - 1;
+          // std::vector<int> vect{ i - 1 - num_bins, i - num_bins, i, i - 1, i - 1 + num_bins, i + num_bins};
+      } else {
+          right_bin = bin_num + 1;
+          top_bin = bin_num - num_bins_1d;
+          top_right_bin = bin_num - num_bins_1d + 1;
+          bottom_bin = bin_num + num_bins_1d;
+          bottom_right_bin = bin_num + num_bins_1d + 1;
+          left_bin = bin_num - 1;
+          top_left_bin = bin_num - num_bins_1d - 1;
+          bottom_left_bin = bin_num + num_bins_1d - 1;
+          // std::vector<int> vect{ i - 1 - num_bins, i - num_bins, i + 1 - num_bins, i - 1, i, i + 1, i - 1 + num_bins, i + num_bins, i + 1 + num_bins};
+      }
+    }
+
+    if (left_bin != -1) {
+        compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, left_bin, num_parts, num_bins);
+    }
+
+    if (right_bin != -1) {
+        compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, right_bin, num_parts, num_bins);
+    }
+
+    if (bottom_bin != -1) {
+        compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, bottom_bin, num_parts, num_bins);
+    }
+
+    if (top_bin != -1) {
+        compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, top_bin, num_parts, num_bins);
+    }
+
+    compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, self_bin, num_parts, num_bins);
+
+    if (top_left_bin != -1) {
+        compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, top_left_bin, num_parts, num_bins);
+    }
+
+    if (top_right_bin != -1) {
+        compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, top_right_bin, num_parts, num_bins);
+    }
+
+    if (bottom_left_bin != -1) {
+        compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, bottom_left_bin, num_parts, num_bins);
+    }
+
+    if (bottom_right_bin != -1) {
+        compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, bottom_right_bin, num_parts, num_bins);
+    }
+
+
+
+    // find up to 9 relevant bins
+    // compute_forces_bin for each neighboring bin
+
+    // for (int j = 0; j < num_parts; j++)
+    //     apply_force_gpu(particles[tid], particles[j]);
+}
+
+__device__ void compute_forces_bin(particles_t* particles, int* prefix_sum_dev, int* ordered_parts_dev, int tid, int bin_num, int num_parts, int num_bins) {
+
+    int curr_offset = prefix_sum_dev[bin_num];
+    int stop_offset = (bin_num + 1 >= num_bins) ? num_parts : prefix_sum_dev[bin_num + 1];
+
+    for (int j = curr_offset; j < stop_offset; j++)
+        apply_force_gpu(particles[tid], particles[ordered_parts_dev[j]]);
 }
 
 __global__ void move_gpu(particle_t* particles, int num_parts, double size) {
@@ -376,7 +506,8 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
     size_bin = size / num_bins_1d;
     num_bins = num_bins_1d * num_bins_1d;
 
-    // DEBUGGING:
+    // int* bin_counts_dev;
+    // int* bin_counts_host;
     bin_counts_host = (int*) calloc(num_bins, sizeof(int));
     cudaMalloc((void**) &bin_counts_dev, sizeof(int) * num_bins);
     cudaMemset(bin_counts_dev, 0, num_bins * sizeof(int));
@@ -473,11 +604,11 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     // }
 
     // Compute forces
-    // compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts);
+    compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins_1d, prefix_sum_dev, ordered_parts_dev, num_bins);
 
     // Move particles
-    // move_gpu<<<blks, NUM_THREADS>>>(parts, num_parts, size);
+    move_gpu<<<blks, NUM_THREADS>>>(parts, num_parts, size);
 
     cudaMemset(bin_counts_dev, 0, num_bins * sizeof(int));
-    std::cout << "end step" << std::endl;
+    // std::cout << "end step" << std::endl;
 }
