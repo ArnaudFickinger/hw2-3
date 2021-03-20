@@ -502,8 +502,8 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
-    num_bins_1d = 2;
-    // num_bins_1d = int(size / cutoff);
+    // num_bins_1d = 2;
+    num_bins_1d = int(size / cutoff);
     size_bin = size / num_bins_1d;
     num_bins = num_bins_1d * num_bins_1d;
 
