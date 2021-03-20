@@ -401,7 +401,7 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
-    num_bins_1d = 2;
+    num_bins_1d = (int(size / cutoff) + 1);
     size_bin = size / num_bins_1d;
     num_bins = num_bins_1d * num_bins_1d;
 
@@ -489,11 +489,11 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     order_particles<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins_1d, curr_bin_index_dev, ordered_parts_dev);
 
     // DEBUG ORDERED PARTS INDEXES
-    std::cout << "ORDERED PARTS" << std::endl;
-    cudaMemcpy(ordered_parts_host, ordered_parts_dev, sizeof(int) * num_parts, cudaMemcpyDeviceToHost);
-    for (int i = 0; i < num_parts; i++) {
-        std::cout << ordered_parts_host[i] << std::endl;
-    }
+    // std::cout << "ORDERED PARTS" << std::endl;
+    // cudaMemcpy(ordered_parts_host, ordered_parts_dev, sizeof(int) * num_parts, cudaMemcpyDeviceToHost);
+    // for (int i = 0; i < num_parts; i++) {
+    //     std::cout << ordered_parts_host[i] << std::endl;
+    // }
     //
     // std::cout << "ORDERED CURR INDEXES" << std::endl;
     // cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
@@ -508,5 +508,5 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     move_gpu<<<blks, NUM_THREADS>>>(parts, num_parts, size);
 
     cudaMemset(bin_counts_dev, 0, num_bins * sizeof(int));
-    std::cout << "end step" << std::endl;
+    // std::cout << "end step" << std::endl;
 }
