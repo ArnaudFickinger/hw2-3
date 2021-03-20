@@ -582,7 +582,7 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
 
     cudaMemcpy(curr_bin_index_dev, prefix_sum_dev, (num_bins + 1) * sizeof(int), cudaMemcpyDeviceToDevice);
 
-    DEBUG PRE-ORDERED CURR INDEXES
+    // DEBUG PRE-ORDERED CURR INDEXES
     std::cout << "PRE-ORDERED CURR INDEXES" << std::endl;
     cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
     for (int i = 0; i < num_bins + 1; i++) {
