@@ -358,9 +358,9 @@ __global__ void compute_forces_gpu(particle_t* parts, int* ordered_particles, in
        index_last = bin_counts_sum[bin_num+2];
 
     parts[tid].ax = parts[tid].ay = 0;
-    for (int j = index_first; j < index_last; j++)
+    for (int j = index_first; j < index_last; j++){
         int index_neighbor = ordered_particles[j];
-        apply_force_gpu(parts[tid], parts[index_neighbor]);
+        apply_force_gpu(parts[tid], parts[index_neighbor]);}
 }
 
 __global__ void move_gpu(particle_t* particles, int num_parts, double size) {
