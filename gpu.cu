@@ -502,20 +502,20 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     blks = (num_parts + NUM_THREADS - 1) / NUM_THREADS;
 
-    // num_bins_1d = 2;
-    num_bins_1d = int(size / cutoff);
+    num_bins_1d = 2;
+    // num_bins_1d = int(size / cutoff);
     size_bin = size / num_bins_1d;
     num_bins = num_bins_1d * num_bins_1d;
 
     // int* bin_counts_dev;
     // int* bin_counts_host;
-    // bin_counts_host = (int*) calloc(num_bins, sizeof(int));
+    bin_counts_host = (int*) calloc(num_bins, sizeof(int));
     cudaMalloc((void**) &bin_counts_dev, sizeof(int) * num_bins);
     cudaMemset(bin_counts_dev, 0, num_bins * sizeof(int));
 
     // int* prefix_sum_dev;
     // int* prefix_sum_host;
-    // prefix_sum_host = (int*) calloc(num_bins+1, sizeof(int));
+    prefix_sum_host = (int*) calloc(num_bins+1, sizeof(int));
     cudaMalloc((void**) &prefix_sum_dev, sizeof(int) * (num_bins + 1));
 
     // int* curr_bin_index_dev;
@@ -582,12 +582,12 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
 
     cudaMemcpy(curr_bin_index_dev, prefix_sum_dev, (num_bins + 1) * sizeof(int), cudaMemcpyDeviceToDevice);
 
-    // DEBUG PRE-ORDERED CURR INDEXES
-    // std::cout << "PRE-ORDERED CURR INDEXES" << std::endl;
-    // cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
-    // for (int i = 0; i < num_bins + 1; i++) {
-    //     std::cout << curr_bin_index_host[i] << std::endl;
-    // }
+    DEBUG PRE-ORDERED CURR INDEXES
+    std::cout << "PRE-ORDERED CURR INDEXES" << std::endl;
+    cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < num_bins + 1; i++) {
+        std::cout << curr_bin_index_host[i] << std::endl;
+    }
 
     order_particles<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins_1d, curr_bin_index_dev, ordered_parts_dev);
 
