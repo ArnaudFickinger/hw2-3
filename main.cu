@@ -110,7 +110,7 @@ int main(int argc, char** argv) {
 
     // Initialize Particles
     int num_parts = find_int_arg(argc, argv, "-n", 1000);
-    int part_seed = find_int_arg(argc, argv, "-s", 42;
+    int part_seed = find_int_arg(argc, argv, "-s", 42);
     double size = sqrt(density * num_parts);
 
     particle_t* parts = new particle_t[num_parts];
