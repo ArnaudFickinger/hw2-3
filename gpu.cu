@@ -323,7 +323,7 @@ __device__ void apply_force_gpu(particle_t& particle, particle_t& neighbor) {
     particle.ay += coef * dy;
 }
 
-__device__ void compute_forces_bin(particles_t* particles, int* prefix_sum_dev, int* ordered_parts_dev, int tid, int bin_num, int num_parts, int num_bins) {
+__device__ void compute_forces_bin(particle_t* particles, int* prefix_sum_dev, int* ordered_parts_dev, int tid, int bin_num, int num_parts, int num_bins) {
 
     int curr_offset = prefix_sum_dev[bin_num];
     int stop_offset = (bin_num + 1 >= num_bins) ? num_parts : prefix_sum_dev[bin_num + 1];
