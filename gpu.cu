@@ -437,7 +437,7 @@ __global__ void compute_forces_gpu(particle_t* parts, int num_parts, float size_
         compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, top_bin, num_parts, num_bins);
     }
 
-    compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, self_bin, num_parts, num_bins);
+    // compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, self_bin, num_parts, num_bins);
 
     if (top_left_bin != -1) {
         compute_forces_bin(parts, prefix_sum_dev, ordered_parts_dev, tid, top_left_bin, num_parts, num_bins);
