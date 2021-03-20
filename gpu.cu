@@ -520,7 +520,7 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     // int* curr_bin_index_dev;
     // int* curr_bin_index_host;
-    // curr_bin_index_host = (int*) calloc(num_bins+1, sizeof(int));
+    curr_bin_index_host = (int*) calloc(num_bins+1, sizeof(int));
     cudaMalloc((void**) &curr_bin_index_dev, sizeof(int) * (num_bins + 1));
 
     // int* ordered_parts_dev;
@@ -598,11 +598,11 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     //     std::cout << ordered_parts_host[i] << std::endl;
     // }
     //
-    // std::cout << "ORDERED CURR INDEXES" << std::endl;
-    // cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
-    // for (int i = 0; i < num_bins + 1; i++) {
-    //     std::cout << curr_bin_index_host[i] << std::endl;
-    // }
+    std::cout << "ORDERED CURR INDEXES" << std::endl;
+    cudaMemcpy(curr_bin_index_host, curr_bin_index_dev, sizeof(int) * (num_bins + 1), cudaMemcpyDeviceToHost);
+    for (int i = 0; i < num_bins + 1; i++) {
+        std::cout << curr_bin_index_host[i] << std::endl;
+    }
 
     // Compute forces
     compute_forces_gpu<<<blks, NUM_THREADS>>>(parts, num_parts, size_bin, num_bins_1d, prefix_sum_dev, ordered_parts_dev, num_bins);
@@ -611,5 +611,5 @@ void simulate_one_step(particle_t* parts, int num_parts, double size) {
     move_gpu<<<blks, NUM_THREADS>>>(parts, num_parts, size);
 
     cudaMemset(bin_counts_dev, 0, num_bins * sizeof(int));
-    // std::cout << "end step" << std::endl;
+    std::cout << "end step" << std::endl;
 }
