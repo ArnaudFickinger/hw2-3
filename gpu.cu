@@ -509,23 +509,23 @@ void init_simulation(particle_t* parts, int num_parts, double size) {
 
     // int* bin_counts_dev;
     // int* bin_counts_host;
-    bin_counts_host = (int*) calloc(num_bins, sizeof(int));
+    // bin_counts_host = (int*) calloc(num_bins, sizeof(int));
     cudaMalloc((void**) &bin_counts_dev, sizeof(int) * num_bins);
     cudaMemset(bin_counts_dev, 0, num_bins * sizeof(int));
 
     // int* prefix_sum_dev;
     // int* prefix_sum_host;
-    prefix_sum_host = (int*) calloc(num_bins+1, sizeof(int));
+    // prefix_sum_host = (int*) calloc(num_bins+1, sizeof(int));
     cudaMalloc((void**) &prefix_sum_dev, sizeof(int) * (num_bins + 1));
 
     // int* curr_bin_index_dev;
     // int* curr_bin_index_host;
-    curr_bin_index_host = (int*) calloc(num_bins+1, sizeof(int));
+    // curr_bin_index_host = (int*) calloc(num_bins+1, sizeof(int));
     cudaMalloc((void**) &curr_bin_index_dev, sizeof(int) * (num_bins + 1));
 
     // int* ordered_parts_dev;
     // int* ordered_parts_host;
-    ordered_parts_host = (int*) calloc(num_parts, sizeof(int));
+    // ordered_parts_host = (int*) calloc(num_parts, sizeof(int));
     cudaMalloc((void**) &ordered_parts_dev, sizeof(int) * num_parts);
 }
 
