@@ -2,7 +2,11 @@
 #define __CS267_COMMON_H__
 
 // Program Constants
+<<<<<<< HEAD
 #define nsteps   1000
+=======
+#define nsteps   3
+>>>>>>> ceff6eaa625def4f7c3c9e51ff9b5853424556dd
 #define savefreq 10
 #define density  0.0005
 #define mass     0.01
