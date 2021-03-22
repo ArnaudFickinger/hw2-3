@@ -277,7 +277,6 @@
 
 
 
-
 #include "common.h"
 #include <cuda.h>
 #include <iostream>
